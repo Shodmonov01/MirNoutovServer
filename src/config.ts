@@ -16,6 +16,8 @@ interface Config {
   R2_BUCKET: string;
   R2_PUBLIC_URL: string;
   CORS_ORIGIN: string;
+  /** Только при NODE_ENV=development: не проверять initData, для теста каталога в браузере. В production всегда false. */
+  DEV_SKIP_TELEGRAM_AUTH: boolean;
 }
 
 const required = (key: string): string => {
@@ -46,19 +48,35 @@ const optionalPort = (key: string, defaultValue: number): number => {
   return n;
 };
 
-export const loadConfig = (): Config => ({
-  NODE_ENV: optional('NODE_ENV', 'development'),
-  PORT: optionalPort('PORT', 3000),
-  MONGODB_URI: required('MONGODB_URI'),
-  BOT_TOKEN: required('BOT_TOKEN'),
-  JWT_SECRET: required('JWT_SECRET'),
-  JWT_EXPIRES_IN: optional('JWT_EXPIRES_IN', '7d'),
-  R2_ENDPOINT: required('R2_ENDPOINT'),
-  R2_ACCESS_KEY: required('R2_ACCESS_KEY'),
-  R2_SECRET_KEY: required('R2_SECRET_KEY'),
-  R2_BUCKET: required('R2_BUCKET'),
-  R2_PUBLIC_URL: required('R2_PUBLIC_URL').replace(/\/$/, ''),
-  CORS_ORIGIN: required('CORS_ORIGIN'),
-});
+const optionalBool = (key: string, defaultValue: boolean): boolean => {
+  const raw = process.env[key];
+  if (raw === undefined || raw === '') {
+    return defaultValue;
+  }
+  const v = raw.trim().toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+};
+
+export const loadConfig = (): Config => {
+  const nodeEnv = optional('NODE_ENV', 'development');
+  const devSkipTelegram =
+    nodeEnv === 'development' && optionalBool('DEV_SKIP_TELEGRAM_AUTH', false);
+
+  return {
+    NODE_ENV: nodeEnv,
+    PORT: optionalPort('PORT', 3000),
+    MONGODB_URI: required('MONGODB_URI'),
+    BOT_TOKEN: required('BOT_TOKEN'),
+    JWT_SECRET: required('JWT_SECRET'),
+    JWT_EXPIRES_IN: optional('JWT_EXPIRES_IN', '7d'),
+    R2_ENDPOINT: required('R2_ENDPOINT'),
+    R2_ACCESS_KEY: required('R2_ACCESS_KEY'),
+    R2_SECRET_KEY: required('R2_SECRET_KEY'),
+    R2_BUCKET: required('R2_BUCKET'),
+    R2_PUBLIC_URL: required('R2_PUBLIC_URL').replace(/\/$/, ''),
+    CORS_ORIGIN: required('CORS_ORIGIN'),
+    DEV_SKIP_TELEGRAM_AUTH: devSkipTelegram,
+  };
+};
 
 export type { Config };

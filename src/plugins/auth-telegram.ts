@@ -4,6 +4,15 @@ import type { Config } from '../config';
 
 export const buildVerifyTelegramAuth = (config: Config) => {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+    if (config.DEV_SKIP_TELEGRAM_AUTH) {
+      request.telegramUser = {
+        id: 0,
+        first_name: 'LocalDev',
+        username: 'local_dev',
+      };
+      return;
+    }
+
     const header = request.headers['x-telegram-init-data'];
     if (!header || typeof header !== 'string') {
       await reply.status(401).send({ message: 'Unauthorized' });

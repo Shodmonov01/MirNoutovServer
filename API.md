@@ -412,13 +412,17 @@ Authorization: Bearer <JWT>
 
 `origin` задаётся переменной **`CORS_ORIGIN`** в `.env`: `*`, один URL или **несколько через запятую** (например `http://localhost:5173,http://localhost:5174` для основного фронта и админки).
 
+### Локальный тест без Telegram
+
+По умолчанию `/api/*` требует валидный **`X-Telegram-Init-Data`**. В обычном браузере заголовка нет → **401**. Для разработки при **`NODE_ENV=development`** можно выставить **`DEV_SKIP_TELEGRAM_AUTH=true`** в `server/.env`: проверка initData отключается, в контекст подставляется тестовый пользователь. **В production не включать** (в `production` флаг не действует).
+
 ---
 
 ## Postman: типовой сценарий
 
 1. **Переменная окружения** `baseUrl` = `http://localhost:3000`.
 2. **Админка:** `POST {{baseUrl}}/admin/login` → скопировать `token` → для остальных запросов **Authorization → Bearer Token**.
-3. **Публичное API:** в **Headers** добавить `X-Telegram-Init-Data` со значением реальной строки из Telegram Web App (подпись должна совпадать с `BOT_TOKEN`). Без реального Mini App проще тестировать **`/admin/*`**, а **`/api/*`** — из клиента или отдельного скрипта, генерирующего валидный `initData`.
+3. **Публичное API:** в **Headers** добавить `X-Telegram-Init-Data` со значением реальной строки из Telegram Web App (подпись должна совпадать с `BOT_TOKEN`). Локально без Telegram см. **`DEV_SKIP_TELEGRAM_AUTH`** в разделе CORS выше.
 
 ---
 
