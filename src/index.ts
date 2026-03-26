@@ -4,14 +4,16 @@ import mongoose from 'mongoose';
 import { ZodError } from 'zod';
 import { loadConfig } from './config';
 import { ServiceError } from './lib/service-error';
-import { registerAuthAdmin, verifyAdminAuth } from './plugins/auth-admin';
+import { registerAuthAdmin, verifyAdminAuth, verifySuperAdmin } from './plugins/auth-admin';
 import { buildVerifyTelegramAuth } from './plugins/auth-telegram';
 import { registerCors } from './plugins/cors';
 import { registerAdminAuthRoutes } from './routes/admin/auth';
 import { registerAdminCategoriesRoutes } from './routes/admin/categories';
+import { registerAdminMeRoute } from './routes/admin/me';
 import { registerAdminOrdersRoutes } from './routes/admin/orders';
 import { registerAdminProductsRoutes } from './routes/admin/products';
 import { registerAdminSubcategoriesRoutes } from './routes/admin/subcategories';
+import { registerAdminTelegramAdminsRoutes } from './routes/admin/telegram-admins';
 import { registerAdminUploadRoutes } from './routes/admin/upload';
 import { registerApiCategoriesRoutes } from './routes/api/categories';
 import { registerApiDeliveryRoutes } from './routes/api/delivery';
@@ -52,12 +54,20 @@ const main = async (): Promise<void> => {
   );
 
   await fastify.register(async (f) => {
-    await registerAdminAuthRoutes(f);
+    await registerAdminAuthRoutes(f, config);
   }, { prefix: '/admin' });
 
   await fastify.register(
     async (f) => {
       f.addHook('preHandler', verifyAdminAuth);
+      await registerAdminMeRoute(f);
+      await f.register(
+        async (scope) => {
+          scope.addHook('preHandler', verifySuperAdmin);
+          await registerAdminTelegramAdminsRoutes(scope);
+        },
+        { prefix: '/telegram-admins' },
+      );
       await f.register(registerAdminProductsRoutes);
       await f.register(registerAdminSubcategoriesRoutes);
       await f.register(registerAdminCategoriesRoutes);
